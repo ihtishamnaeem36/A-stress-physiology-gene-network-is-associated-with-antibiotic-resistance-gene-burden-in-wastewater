@@ -1,0 +1,106 @@
+Module A,Module B,rho
+Glutathione metabolism,Nitric oxide stress,0.9318885448916407
+Electron carrier balance,Two-component systems,0.7977296181630547
+Recombination repair,Two-component systems,0.7894736842105263
+Glutathione metabolism,Replication fidelity,0.7791537667698658
+Recombination repair,Thioredoxin/Peroxidase,0.7770897832817338
+Nitric oxide stress,Sigma factors (RpoS/RpoH),-0.739938080495356
+Nitric oxide stress,Two-component systems,0.7192982456140351
+Sigma factors (RpoS/RpoH),Thioredoxin/Peroxidase,-0.7151702786377709
+Glutathione metabolism,Two-component systems,0.7027863777089782
+Nitric oxide stress,Thioredoxin/Peroxidase,0.6904024767801857
+Glutathione metabolism,Recombination repair,0.6862745098039216
+Nitric oxide stress,Replication fidelity,0.6780185758513931
+Nitric oxide stress,Recombination repair,0.6697626418988648
+Glutathione metabolism,Sigma factors (RpoS/RpoH),-0.6429308565531475
+Electron carrier balance,Recombination repair,0.632610939112487
+Nucleotide excision repair (NER),SOS response,0.6202270381836945
+Thioredoxin/Peroxidase,Two-component systems,0.6016511867905057
+Nucleotide excision repair (NER),Stringent response (ppGpp),0.6016511867905057
+Peptidoglycan remodeling,Replication fidelity,0.5954592363261093
+Nucleotide excision repair (NER),Peptidoglycan remodeling,-0.5954592363261093
+Glutathione metabolism,LPS remodeling,0.5748194014447885
+Glutathione metabolism,Thioredoxin/Peroxidase,0.5706914344685242
+Catalase/Peroxidase,Replication fidelity,0.5665634674922602
+LPS remodeling,Two-component systems,0.5521155830753354
+Catalase/Peroxidase,Peptidoglycan remodeling,0.5500515995872033
+Stringent response (ppGpp),Two-component systems,0.543859649122807
+Sigma factors (RpoS/RpoH),Two-component systems,-0.5356037151702786
+Electron carrier balance,Nitric oxide stress,0.5170278637770898
+Glutathione metabolism,SOS response,-0.4984520123839009
+LPS remodeling,Nitric oxide stress,0.4963880288957688
+Electron carrier balance,Sigma factors (RpoS/RpoH),-0.4901960784313726
+Electron carrier balance,Thioredoxin/Peroxidase,0.4901960784313726
+LPS remodeling,Recombination repair,0.4551083591331269
+Peptidoglycan remodeling,Recombination repair,0.4489164086687306
+Electron carrier balance,Glutathione metabolism,0.4468524251805985
+Recombination repair,Sigma factors (RpoS/RpoH),-0.4447884416924664
+LPS remodeling,SOS response,-0.4406604747162023
+Glutathione metabolism,Peptidoglycan remodeling,0.436532507739938
+Recombination repair,Stringent response (ppGpp),0.436532507739938
+LPS remodeling,Replication fidelity,0.4262125902992776
+LPS remodeling,Sigma factors (RpoS/RpoH),-0.4158926728586171
+Stringent response (ppGpp),Thioredoxin/Peroxidase,0.4158926728586171
+Replication fidelity,Two-component systems,0.4117647058823529
+Catalase/Peroxidase,Glutathione metabolism,0.4055727554179567
+Electron carrier balance,Stringent response (ppGpp),0.4035087719298245
+Nucleotide excision repair (NER),Replication fidelity,-0.3993808049535604
+Electron carrier balance,LPS remodeling,0.3931888544891641
+Replication fidelity,SOS response,-0.3931888544891641
+LPS remodeling,Thioredoxin/Peroxidase,0.3684210526315789
+OxyR oxidative DNA repair,SOS response,0.3663570691434469
+Catalase/Peroxidase,Thioredoxin/Peroxidase,-0.3642930856553147
+Nitric oxide stress,SOS response,-0.3415892672858617
+LPS remodeling,Nucleotide excision repair (NER),-0.3395252837977295
+Peptidoglycan remodeling,Two-component systems,0.3395252837977295
+SOS response,Sigma factors (RpoS/RpoH),0.3395252837977295
+Recombination repair,Replication fidelity,0.3333333333333333
+Electron carrier balance,Nucleotide excision repair (NER),0.327141382868937
+OxyR oxidative DNA repair,Thioredoxin/Peroxidase,0.3106295149638803
+Glutathione metabolism,Nucleotide excision repair (NER),-0.3003095975232198
+Catalase/Peroxidase,LPS remodeling,0.2941176470588235
+Glutathione metabolism,Stringent response (ppGpp),0.2941176470588235
+LPS remodeling,Peptidoglycan remodeling,0.2920536635706914
+SOS response,Stringent response (ppGpp),0.283797729618163
+OxyR oxidative DNA repair,Recombination repair,0.2796697626418988
+Peptidoglycan remodeling,SOS response,-0.2693498452012384
+Nitric oxide stress,Stringent response (ppGpp),0.2672858617131063
+OxyR oxidative DNA repair,Peptidoglycan remodeling,0.2590299277605778
+Catalase/Peroxidase,Nucleotide excision repair (NER),-0.2528379772961816
+Nitric oxide stress,Peptidoglycan remodeling,0.2445820433436532
+Sigma factors (RpoS/RpoH),Stringent response (ppGpp),-0.2363261093911248
+Catalase/Peroxidase,Two-component systems,0.2280701754385965
+OxyR oxidative DNA repair,Stringent response (ppGpp),0.2260061919504644
+OxyR oxidative DNA repair,Sigma factors (RpoS/RpoH),0.2239422084623323
+Replication fidelity,Sigma factors (RpoS/RpoH),-0.2156862745098038
+OxyR oxidative DNA repair,Replication fidelity,0.2094943240454076
+Catalase/Peroxidase,Sigma factors (RpoS/RpoH),0.197110423116615
+Catalase/Peroxidase,Stringent response (ppGpp),0.1929824561403509
+Nitric oxide stress,Nucleotide excision repair (NER),-0.1929824561403509
+Recombination repair,SOS response,-0.1929824561403509
+Electron carrier balance,Replication fidelity,0.1723426212590299
+Peptidoglycan remodeling,Sigma factors (RpoS/RpoH),0.1702786377708978
+Nucleotide excision repair (NER),OxyR oxidative DNA repair,0.1682146542827657
+Catalase/Peroxidase,SOS response,-0.1620227038183694
+OxyR oxidative DNA repair,Two-component systems,0.1558307533539731
+Replication fidelity,Thioredoxin/Peroxidase,0.153766769865841
+LPS remodeling,Stringent response (ppGpp),0.153766769865841
+Nitric oxide stress,OxyR oxidative DNA repair,0.1517027863777089
+Catalase/Peroxidase,Nitric oxide stress,0.1289989680082559
+SOS response,Thioredoxin/Peroxidase,-0.1166150670794633
+Nucleotide excision repair (NER),Thioredoxin/Peroxidase,0.1124871001031991
+Electron carrier balance,SOS response,0.1083591331269349
+Replication fidelity,Stringent response (ppGpp),0.0835913312693498
+Catalase/Peroxidase,OxyR oxidative DNA repair,-0.0815273477812177
+Nucleotide excision repair (NER),Two-component systems,0.0753353973168214
+LPS remodeling,OxyR oxidative DNA repair,-0.067079463364293
+Electron carrier balance,Peptidoglycan remodeling,-0.0650154798761609
+Glutathione metabolism,OxyR oxidative DNA repair,0.0567595459236326
+Peptidoglycan remodeling,Thioredoxin/Peroxidase,0.0567595459236326
+Nucleotide excision repair (NER),Recombination repair,-0.04437564499484
+Catalase/Peroxidase,Recombination repair,0.0423116615067079
+SOS response,Two-component systems,-0.0361197110423116
+Electron carrier balance,OxyR oxidative DNA repair,-0.0278637770897832
+Catalase/Peroxidase,Electron carrier balance,-0.0278637770897832
+Nucleotide excision repair (NER),Sigma factors (RpoS/RpoH),-0.0257997936016511
+Peptidoglycan remodeling,Stringent response (ppGpp),-0.0257997936016511

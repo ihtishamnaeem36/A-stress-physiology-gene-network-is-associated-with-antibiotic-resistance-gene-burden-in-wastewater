@@ -1,0 +1,18 @@
+{
+  "total_pairs": 407253,
+  "n_edges": 53775,
+  "density": 0.13204322620091197,
+  "mean_abs_r_edges": 0.7222148392289899,
+  "positive_fraction": 0.6428079962807997,
+  "mean_degree": 119.1029900332226,
+  "max_degree_KO": "K00406",
+  "max_degree": 328,
+  "giant_component_size": 886,
+  "giant_component_pct": 98.11738648947951,
+  "avg_local_clustering": 0.5578154016349051,
+  "transitivity": 0.6327129743660181,
+  "ER_avg_local_clustering": 0.13195011609939328,
+  "ER_transitivity": 0.1319521737567911,
+  "clustering_enrichment_local": 4.227471851670996,
+  "clustering_enrichment_transitivity": 4.7950174396687775
+}

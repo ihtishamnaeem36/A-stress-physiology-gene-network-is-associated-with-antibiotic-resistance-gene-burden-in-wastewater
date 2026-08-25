@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated manuscript."
+type: software
+title: "Analysis code for: A stress-physiology gene co-occurrence network is associated with antibiotic-resistance-gene burden in urban wastewater metagenomes"
+authors:
+  - family-names: "Khan"
+    given-names: "Ishaq"
+  - family-names: "Naeem"
+    given-names: "Ihtisham"
+  - family-names: "Ali"
+    given-names: "Syed Shujait"
+  - family-names: "Shafiq"
+    given-names: "Muhammad"
+repository-code: "REPLACE_WITH_GITHUB_URL_ONCE_PUSHED"
+license: MIT
+version: "1.0.0"
+date-released: "2026-08-24"
+keywords:
+  - wastewater metagenomics
+  - functional gene co-occurrence network
+  - antibiotic resistance genes
+  - SARG
+  - stringent response
+  - KEGG Orthology
+  - antimicrobial resistance surveillance
+preferred-citation:
+  type: article
+  title: "A stress-physiology gene co-occurrence network is associated with antibiotic-resistance-gene burden in urban wastewater metagenomes"
+  authors:
+    - family-names: "Khan"
+      given-names: "Ishaq"
+    - family-names: "Naeem"
+      given-names: "Ihtisham"
+    - family-names: "Ali"
+      given-names: "Syed Shujait"
+    - family-names: "Shafiq"
+      given-names: "Muhammad"
+  journal: "Journal of Environmental Chemical Engineering"
+  year: 2026
+  # DOI, volume, issue and page numbers to be added once the manuscript is accepted/published.

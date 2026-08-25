@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Node
+node_modules/
+npm-debug.log*
+package-lock.json.bak
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# LibreOffice / MS Office lock files
+.~lock.*#
+~$*.docx
+~$*.xlsx
+
+# Large generated artefacts that should be regenerated, not committed
+*.tmp

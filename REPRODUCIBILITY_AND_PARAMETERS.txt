@@ -1,0 +1,383 @@
+REPRODUCIBILITY AND PARAMETERS — Project 2.2 (Network-Resistome Integration)
+Every analysis script used to produce the results, figures, and manuscript, organised by
+pipeline stage, with the exact statistical parameters each one uses. Read this alongside
+PROJECT_STATUS_AND_HANDOFF.txt (one folder up) for the overall project narrative.
+
+Run order across the whole pipeline: 00 -> 01 -> 02 -> 03 (folder prefixes below match this).
+
+================================================================
+FOLDER: 00_core_network_pipeline/
+================================================================
+Purpose: the original, primary analysis. Takes the raw KO abundance matrix, builds the 15
+module scores, computes the KO-level and module-level Spearman correlation networks, runs
+Kruskal-Wallis group tests, PCA/PERMANOVA ordination, and BH-FDR correction. This is the
+pipeline that produced Tables 1-6 and Figures 1-9 in the manuscript.
+
+Input file (all scripts read from the same source):
+  1.step  Target module selection and k number recovery/step1 figures table/Step1_Abundance_Matrix.xlsx
+  sheet "Full_Abundance_Matrix" — 903 curated KOs x 18 samples, plus a "Module" label column.
+  (Path is relative to the project root "project 2.2/".)
+
+Scripts, in run order:
+
+- recompute_module_scores.py
+  Reads Step1_Abundance_Matrix.xlsx. Computes two alternative module-score definitions per
+  sample per module: (a) "sumlog" = sum across a module's KOs of log10(abundance+1) per KO
+  (the definition used throughout the final manuscript), and (b) "meanraw" = mean of raw
+  (non-log) KO abundances (an earlier/legacy definition, kept only for cross-checking).
+  Outputs: module_scores_sumlog_frozen.csv, module_scores_meanraw_frozen.csv,
+  module_ko_counts_frozen.csv (KOs per module, for Table 1).
+
+- step2_module_correlation_and_kruskalwallis.py
+  Inputs: module_scores_sumlog_frozen.csv, module_scores_meanraw_frozen.csv, sample_meta.csv.
+  (a) 15x15 module-module Spearman correlation matrix (scipy.stats.spearmanr, pairwise,
+      all 105 unique module pairs) on the sumlog scores — this is the "agreed" definition.
+      Prints the headline Electron carrier balance x Recombination repair pair explicitly.
+      Also recomputes the same pair on meanraw scores for comparison (legacy Table 1/3 style).
+  (b) Kruskal-Wallis test per module across the 3-level "environment" (source type: Hospital/
+      Community/Slaughterhouse) factor, n=6 per group. Reports H statistic, raw p, and
+      epsilon-squared effect size. Multiple-testing correction: both Bonferroni (p_raw x 15)
+      and Benjamini-Hochberg FDR (manual step-up implementation, not scipy/statsmodels).
+      Repeated for the 3-level "city" factor (Mardan/Peshawar/Swat, n=6 each) without
+      correction (city was a secondary/exploratory factor, not corrected in the manuscript).
+  Outputs: module_corr_sumlog_frozen.csv (the 15x15 matrix used for Figure 3),
+  kw_environment_sumlog_frozen.csv (feeds Table on module-level group differences).
+
+- step3_crosscheck_original_module_map.py
+  Sanity check only, not part of the reported results: recomputes the Electron carrier
+  balance x Recombination repair correlation using the ORIGINAL (pre-"frozen") KO-to-module
+  assignment map, to confirm the frozen map used elsewhere didn't silently change this number.
+  Uses the same source Step1_Abundance_Matrix.xlsx file directly.
+
+- step4_KO_level_network_construction.py
+  This is the KO-level (not module-level) network — the basis for the network topology
+  statistics reported in Results (giant-component size, clustering enrichment, etc.) and for
+  Figure 1/Figure 2.
+  Method: log10(x+1) transform of all 903 KOs x 18 samples: ranks each KO's 18 values
+  (scipy.stats.rankdata) and computes Spearman rho for all C(903,2)=407,253 pairs via
+  np.corrcoef on the rank matrix (Pearson-on-ranks = Spearman, this is the standard trick used
+  to vectorise the full pairwise computation instead of looping spearmanr 407k times).
+  p-values via the exact Spearman t-approximation: t = r*sqrt((n-2)/(1-r^2)), df=n-2=16,
+  two-tailed, scipy.stats.t.sf.
+  EDGE THRESHOLD (the key parameter used throughout the paper): |rho| > 0.60 AND p < 0.05.
+  Builds a NetworkX graph on this edge set. Computes: edge count/density, mean |rho| among
+  edges, positive-edge fraction, node degree distribution and top-10 hub KOs, number of
+  connected components, giant-component size and percentage, mean local clustering coefficient,
+  global transitivity.
+  Null model: 5 realisations of an Erdos-Renyi random graph with the SAME number of nodes and
+  edges (nx.gnm_random_graph, seeds 0-4, numpy global seed 42), averaged, used to compute the
+  clustering-enrichment ratio reported in the manuscript (~4.2x).
+  Outputs: network_summary.json (all headline network statistics), network_edges.csv (full
+  edge list with weights, used by fig1/fig2 scripts), network_degree.csv (per-KO degree,
+  used for hub analysis and Figure 2's degree-threshold sensitivity plot).
+
+- debug_fdr_denominator_check.py
+  Diagnostic script: checks how many of the 903 KOs have zero variance across the 18 samples
+  (i.e. constant or all-zero) — these pairs cannot get a valid Spearman p-value and must be
+  excluded from the FDR denominator, not treated as non-significant. Confirms the exact count
+  of valid vs. dropped pairs before FDR correction is applied.
+
+- step6_fdr_correction_v1.py / step6_fdr_correction_v2_final.py
+  BH-FDR correction applied to the full KO-KO pairwise correlation p-value set. v1 is an
+  earlier attempt; v2_final is the one whose numbers are reported in the manuscript (Results
+  3.x: "47,821 edges, 88.9%, survive BH-FDR correction").
+  Key parameter/decision documented here: the FDR denominator is the set of VALID (testable)
+  pairs only, i.e. pairs where neither KO has zero variance (m = valid pairs), NOT the raw
+  407,253 total pairs. v2_final explicitly computes and reports both ways (valid-only
+  denominator, and a conservative alternative treating all untestable pairs as p=1) so the
+  choice and its effect are documented, not hidden. BH step-up procedure implemented manually
+  (sort p ascending, p_adj = p * m / rank, enforce monotonicity via cumulative minimum from
+  the largest rank down), not via statsmodels.multipletests — replicate this exact procedure,
+  not just "BH-FDR" generically, if you re-run or independently re-derive these numbers.
+  Significance thresholds: raw edge = |rho|>0.60 & p<0.05 (same as step4); FDR-surviving edge
+  additionally requires q<0.05.
+
+- step5_pca_permanova_ordination.py
+  Input: module_scores_sumlog_frozen.csv (15 module scores x 18 samples), sample_meta.csv
+  (environment/city/replicate labels per sample).
+  PCA: z-score each module score column (mean 0, sd 1, ddof=1) then SVD (np.linalg.svd) on
+  the resulting 18x15 matrix; variance explained by PC1-PC5 computed from singular values.
+  PERMANOVA: manual from-scratch implementation (not skbio/vegan) of a Bray-Curtis-distance
+  pseudo-F test. Distance matrix: scipy.spatial.distance.pdist with metric="braycurtis" on
+  z-scored (Euclidean) values are NOT used here directly for the main result — Bray-Curtis
+  needs non-negative input, so values are clipped at 0 first (np.clip(X,0,None)) before the
+  Bray-Curtis distance calculation; this clipping is a deliberate, documented parameter choice
+  because module scores can be slightly negative after aggregation and Bray-Curtis is
+  undefined for negative inputs.
+  Permutation test: 9,999 label permutations (n_perm=9999), fixed seed=1 for reproducibility,
+  tests both "environment" (source type) and "city" factors independently. p = (count of
+  permuted F >= observed F, plus 1) / (n_perm + 1) — the standard "+1" correction to avoid a
+  p=0 result.
+  Also reports simple mean within-group Bray-Curtis distance per group (a beta-dispersion-style
+  descriptive check, precursor to the more formal betadisper-style test in fig6).
+
+- step5b_permanova_distance_metric_sensitivity.py
+  Sensitivity check: re-runs the same manual PERMANOVA procedure above but compares two
+  different distance metrics — z-scored Euclidean distance vs. Bray-Curtis on raw (clipped)
+  sumlog scores — to confirm the PERMANOVA conclusion (no significant environment/city
+  clustering) is not an artefact of the specific distance metric chosen. Same 9,999-permutation,
+  seed=1 setup as step5.
+
+Frozen intermediate outputs used by later steps and by the figure scripts are archived
+verbatim in ../_reference_frozen_outputs/ (see that folder's own note below) so the exact
+numbers behind every table/figure can be checked without re-running the full pipeline.
+
+================================================================
+FOLDER: 01_resistome_and_robustness_checks/
+================================================================
+Purpose: everything downstream of the core network — linking the network to SARG-based
+antibiotic-resistance-gene (ARG) burden (the paper's headline finding), plus every robustness/
+sensitivity check run against that finding. This is the pipeline behind Results 3.7-3.8,
+Tables 4-8, and Figures 8-12.
+
+Run order:
+
+- 00_data_prep_module_definitions.py
+  Defines the 15 module -> KO-list mapping and the 3 mechanistic groups (A: Redox stress,
+  B: DNA damage/fidelity, C: Stress physiology) used consistently across every later script
+  and every figure. If you ever need to re-verify which KOs belong to which module, this file
+  is the single source of truth (the "frozen map" referenced throughout 00_core_network_pipeline).
+
+- 01_sarg_data_prep.py
+  Loads and cleans the SARG (Structured Antibiotic Resistance Genes database) annotation
+  output for the same 18 samples, at all four resolution levels used in the manuscript: Type
+  (21 categories), Subtype (748 gene families), Mechanism group, Mechanism subgroup. Handles
+  the sample-identifier correction silently here (do not re-narrate it in any manuscript text —
+  see PROJECT_STATUS_AND_HANDOFF.txt Section 5 for why). NOTE: this file's BASE path constant
+  was previously found pointing at a stale folder location and was fixed mid-project to include
+  a "DATA used/" subfolder — if you hit a FileNotFoundError running this script, check that
+  BASE still matches your current folder layout before assuming the data is missing.
+
+- 02_arg_network_link.py
+  Computes total ARG burden per sample (summed across all 21 SARG types) and correlates it
+  (Spearman) against each of the 15 module scores, with BH-FDR correction across the 15 tests
+  (same manual BH implementation convention as step6 above). Also runs the source-type
+  Kruskal-Wallis test on total ARG burden itself (H=11.42, p=0.0033 in the reported result).
+  This produces the paper's single most important number: Stringent response module x total
+  ARG burden, Spearman rho=0.73, q=0.0098.
+
+- 03_confound_check_alt.py
+  An earlier/alternate version of the source-type confound check (see 06 below for the final,
+  reported version) — kept for reference; 06 is authoritative.
+
+- 04_taxonomic_dominance_check_figscript_version.py
+  Working copy of the taxonomic dominance check used while iterating on Figure 12; 07 below
+  (07_taxonomic_dominance_check.py) is the authoritative, currently-cited-in-manuscript version.
+  Kept so the figure-generation history is traceable.
+
+- 05_arg_source_type_and_envfit.py
+  Full Type x Module (21 x 15 = 315, minus 1 constant-abundance type = 300 valid tests) and
+  Mechanism-group x Module (8 x 15 = 120 tests) Spearman correlation matrices, same manual
+  BH-FDR procedure. Also runs leave-one-out sensitivity (recompute rho after dropping each of
+  the 18 samples in turn, one at a time) to confirm FDR-significant pairs are not driven by a
+  single sample. Fits total ARG burden as an environmental vector onto the z-scored module-score
+  PCA ordination via multiple linear regression of ARG burden on PC1+PC2 scores (the
+  vegan::envfit equivalent), significance by 9,999-permutation test of sample labels.
+
+- 06_source_type_confound_check.py  [AUTHORITATIVE confound check, cited in Methods 2.14/2.8]
+  Because hospital effluent has both the highest ARG burden and nominally the highest mean
+  Stringent response score, this tests whether the Stringent response x ARG burden correlation
+  is just a source-type grouping artefact. Three tests, all reported in the manuscript:
+  (a) the correlation recomputed separately WITHIN each of the 3 source types,
+  (b) recomputed on the pooled non-hospital subset only (Community + Slaughterhouse, n=12,
+      hospital samples excluded entirely),
+  (c) a partial (rank-residual) correlation after regressing out source type as a categorical
+      covariate, repeated separately regressing out city as the covariate.
+
+- 07_taxonomic_dominance_check.py  [AUTHORITATIVE, cited in Methods 2.15/2.9, Results 3.8]
+  Uses a separately supplied taxon-stratified KEGG functional table (data/stringent_stratified
+  _extract.tsv, an 83-KO extract covering just the Stringent response module) to test whether
+  the resistome linkage could be explained by a single dominant taxon rather than a
+  community-wide signal. First validates that unstratified per-KO totals in this table match
+  the primary abundance matrix exactly (Pearson r=1.0000) to confirm common underlying
+  quantification. Then for each sample: counts distinct contributing taxa (excluding the
+  literal "unclassified" bucket, which is not a specific organism), identifies the single
+  largest contributor and its percentage share of classified abundance, computes Shannon
+  diversity of per-taxon contributions. Decisive test: recomputes the Stringent response module
+  score with each sample's own largest contributing taxon's abundance SUBTRACTED before the
+  log10(x+1) transform, then re-correlates this taxon-excluded score against total ARG burden.
+  Reported result: rho moves only from 0.73 to the 0.725-0.769 range depending on which
+  sample's top taxon is excluded — the association survives.
+  Terminology note (important, previously corrected): call this table "taxon-stratified", never
+  "species-stratified" — species-level taxonomic resolution is empty in most rows.
+
+- 08_permutation_fdr_check.py
+  Additional permutation-based robustness check on the FDR procedure applied to the Type x
+  Module and Mechanism x Module resistome correlation matrices (independent verification that
+  the BH-FDR significant pairs are not sensitive to the exact correction implementation).
+
+- 09_clr_resistome_sensitivity_check.py
+  Compositional-data (centered log-ratio, CLR) transform sensitivity check, applied to the
+  secondary Electron carrier balance x Recombination repair KO-KO edge count (reported result:
+  2,104 raw edges vs. 2,160 edges under CLR transform, under 3% change — called "robust" in
+  the manuscript on this basis).
+
+Files prefixed "_old_" are earlier duplicate copies of data_prep/sarg_data_prep/arg_network_link
+kept only so nothing is silently lost; treat 00/01/02 above (unprefixed) as authoritative.
+
+================================================================
+FOLDER: 02_figure_generation/
+================================================================
+Purpose: one script per manuscript figure (matplotlib), all importing shared colours/style
+settings and the frozen data from the folders above. Run 00_style_setup.py's settings are
+imported by every fig*.py script (do not edit colours/rcParams in an individual fig script —
+change them in 00_style_setup.py so all 12 figures stay visually consistent).
+
+- 00_style_setup.py: shared GROUP_LABELS ("Group A: Redox stress", "Group B: DNA damage and
+  fidelity", "Group C: Stress physiology" — colon style, not en-dash, per the no-dashes rule),
+  colour palette, and matplotlib rcParams (font, DPI, sizes) used by every figure below.
+- fig1_network.py: KO/module-level network backbone diagram. STATUS: UNRESOLVED as of this
+  session — see PROJECT_STATUS_AND_HANDOFF.txt Section 6, item (1) for the full history of 4
+  rejected redesigns and the recommended next step (a direct design decision with the user
+  before touching this script again). Current version uses matplotlib FancyArrowPatch with
+  connectionstyle="arc3,rad=0.15" for curved edges, circular layout with 18-degree angular
+  group gaps, top ~42% of module-pair edges by density shown, no special-case highlighting.
+- fig2_degree_threshold.py: KO network edge-count/degree sensitivity across a range of |rho|
+  thresholds (justifies the 0.60 cutoff used everywhere else).
+- fig3_modcorr_heatmap.py: 15x15 module-module Spearman correlation heatmap (reads
+  module_corr_sumlog_frozen.csv).
+- fig4_boxplots.py: module-score distributions by source type (the non-significant Kruskal-
+  Wallis comparisons).
+- fig5_ordination.py: PCA ordination scatter (PC1 vs PC2) coloured by source type/city.
+- fig6_betadisp.py: beta-dispersion-style within-group distance comparison (companion to the
+  PERMANOVA/PERMDISP robustness analysis).
+- fig7_edgecount_heatmap.py: module-pair edge-count heatmap (the data behind Table 6's within-
+  vs cross-group density statistics — relevant to the Figure 1 redesign options).
+- fig8_composition.py: Electron carrier balance x Recombination repair KO-KO network/
+  composition figure — this is the figure that already "owns" the redox-DNA bridge finding,
+  which is why Figure 1 should NOT also try to spotlight it (see handoff file).
+- fig9_power.py: bootstrap power analysis (sample size needed to resolve the observed,
+  currently non-significant, module-level source-type trends at 80% power).
+- fig10_arg_heatmap.py: Type x Module and Mechanism x Module resistome correlation heatmaps.
+- fig11_arg_scatter.py: Stringent response module score vs. total ARG burden scatter plot (the
+  single figure most directly illustrating the paper's headline finding).
+- fig12_taxonomic_dominance.py: per-sample taxon-contribution / dominance-check visualisation
+  (companion to Table 8 and the 07_taxonomic_dominance_check.py analysis).
+
+Several fig*.py scripts had their `outdir` output-path variable pointing at a stale folder
+location earlier in the project and were corrected via sed to point at this project's actual
+"10. Final Manuscript (Network-Resistome Integration)/figures" folder — if you re-run any of
+these and the output doesn't appear where expected, check `outdir` first.
+
+================================================================
+FOLDER: 03_manuscript_build/
+================================================================
+Purpose: generates the actual .docx manuscript files from scratch using Node.js and the `docx`
+npm package (docx-js can only CREATE new files, not open/edit an existing .docx — see the note
+in PROJECT_STATUS_AND_HANDOFF.txt about editing the existing file directly if that's what's
+needed instead of regenerating).
+
+- build_final.js  [AUTHORITATIVE — this is what produced Project22_FINAL_Manuscript.docx]
+  ~93 KB, roughly 656 lines. Contains, as JS string/array literals: the full Title/Abstract,
+  Introduction, Methods 2.1-2.15, Results 3.1-3.8 (including every table's raw data as arrays),
+  Discussion 4.1-4.2, Limitations, Conclusions, Data/code availability, Methods disclosure,
+  References, and a consolidated Figure-legends section, plus all Word-formatting helper
+  functions (three-line table borders, heading styles, italic-taxon-name cell helper, image
+  embedding, page setup with no header/footer). To regenerate the manuscript after editing this
+  file: `cd 03_manuscript_build && npm install && node build_final.js` (requires the `docx` npm
+  package — package.json/package-lock.json here pin the version last used). Output path is
+  hardcoded inside the script; check/update it to point at this project's manuscript folder
+  before running.
+- build_legends.js: standalone script that was used once to build/verify the consolidated
+  figure-legends section before it was folded into build_final.js.
+- build_plain_language_summary.js: generates Plain_Language_Summary.docx (the separate lay
+  summary document, not the main manuscript).
+
+To verify any rebuild visually (recommended after any edit): convert to PDF and inspect page
+images rather than trusting the build completed without errors —
+  soffice --headless --convert-to pdf Project22_FINAL_Manuscript.docx
+  pdftoppm -jpeg -r 100 Project22_FINAL_Manuscript.pdf page
+then read the resulting page-NN.jpg files.
+
+================================================================
+FOLDER: _reference_frozen_outputs/
+================================================================
+Purpose: NOT scripts — these are the exact frozen intermediate CSV/JSON outputs from the
+00_core_network_pipeline scripts, archived so anyone can check the numbers behind any table or
+figure without re-running the pipeline from the raw Excel file. Includes: sample_meta.csv
+(the 18-sample environment/city/replicate metadata table), module_ko_counts_frozen.csv,
+module_scores_sumlog_frozen.csv / module_scores_meanraw_frozen.csv, module_corr_sumlog_frozen
+.csv, module_corr_pairs_sorted.csv, kw_environment_sumlog_frozen.csv, network_edges.csv,
+network_degree.csv, network_summary.json, and VALIDATED_NUMBERS.md (a running scratch log of
+every headline number as it was independently re-derived and checked against earlier drafts
+during this project — useful as a sanity-check reference, not a manuscript source itself).
+
+================================================================
+GLOBAL CONVENTIONS THAT APPLY ACROSS EVERY SCRIPT ABOVE
+================================================================
+- Correlation method: Spearman rank correlation throughout (never Pearson on raw values),
+  computed either via scipy.stats.spearmanr directly (small matrices) or via the
+  rank-then-Pearson vectorised trick (np.corrcoef on rankdata output) for the large 407,253-
+  pair KO-KO matrix, which is mathematically identical to looping spearmanr but far faster.
+- Multiple-testing correction: Benjamini-Hochberg FDR, implemented manually (sort ascending,
+  p*m/rank, enforce monotonicity by cumulative minimum from the bottom rank up) — NOT
+  statsmodels.multipletests or scipy — in every script that performs FDR correction. If you
+  add a new analysis, replicate this exact manual procedure for consistency with everything
+  already reported, or explicitly note if you deliberately switch to a library implementation
+  (results should be numerically identical, but the code should say so).
+  Significance convention: raw p<0.05 AND (where applicable) |rho|>0.60 defines a "raw" edge;
+  q<0.05 (BH-FDR) defines an "FDR-significant"/surviving edge.
+  Edge/significance threshold for the KO-KO network specifically: |rho| > 0.60 AND p < 0.05.
+- Module score definition (the one used in the final manuscript, everywhere it says "module
+  score" without further qualification): sum, across a module's member KOs, of log10
+  (abundance + 1) per KO per sample ("sumlog"). The alternative "meanraw" definition exists
+  only in the frozen outputs for legacy cross-checking and is not used in any reported result.
+- Random seeds: PERMANOVA permutation tests use numpy's default_rng(seed=1); the Erdos-Renyi
+  null-model comparison in step4 uses np.random.seed(42) plus per-replicate seeds 0-4. Keep
+  these fixed if you need to exactly reproduce a previously reported p-value.
+- Sample identifiers: SARG-pipeline sample SSLW3 is actually sample SCW2 (a mislabelling in the
+  SARG output, corrected in 01_sarg_data_prep.py); sample MHW3 has no counterpart in the KO
+  matrix and is excluded from resistome-linkage analyses. This is a DATA correction only — it
+  must never be narrated in the manuscript text itself (see PROJECT_STATUS_AND_HANDOFF.txt).
+- n=18 samples throughout (3 source types x 3 cities x 2 replicates), except where explicitly
+  reduced (e.g. n=12 in the non-hospital-only confound-check subset).
+
+================================================================
+ADDENDUM: ACTUAL CURRENT code/ FOLDER CONTENTS (flat, not yet reorganised)
+================================================================
+Everything above this line describes the 00_core_network_pipeline /
+01_resistome_and_robustness_checks / 02_figure_generation / 03_manuscript_build folder
+structure as PLANNED. That reorganisation has not been executed — as of this addendum, the
+actual code/ folder remains flat: 02_arg_source_type_and_envfit.py, 03_source_type_confound_
+check.py, 04_taxonomic_dominance_check.py, arg_network_link.py, data_prep.py, sarg_data_prep.py,
+_reference_frozen_outputs/, plus the two scripts below. Anyone completing the planned
+reorganisation should file 05_ml_module_arg_prediction.py and 06_figure6_panel_build.py under
+01_resistome_and_robustness_checks/ (renumbered to follow 09_clr_resistome_sensitivity_check.py),
+since they extend the same ARG-burden linkage this project's Results 3.7-3.10 depend on.
+
+- 05_ml_module_arg_prediction.py  [cited in Methods 2.12, Results 3.7]
+  Multivariate complement to the univariate module-by-module Spearman correlations against
+  total ARG burden (02_arg_network_link.py). Fits an Elastic Net regression on all 15 module
+  scores jointly (scikit-learn ElasticNetCV), evaluated by nested leave-one-out cross-validation
+  (n=18: outer leave-one-out, inner 5-fold CV for alpha/l1_ratio selection on the training fold
+  only). Reports bootstrap stability selection (500 resamples) and a Random Forest secondary
+  check with the same nested-LOOCV scheme plus permutation importance. Feature matrix is
+  module_scores_sumlog_frozen.csv (same frozen matrix as every other module-score analysis in
+  this project); verified at runtime against the already-reported Stringent response (ppGpp)
+  rho=0.7255 before anything downstream is computed. Full parameter grids, seeds and iteration
+  counts are in Supplementary Methods S1 (Supplementary_Information.docx); this script is the
+  single source of truth for the exact values used. Outputs: results/ml_results.json,
+  tables/ML_module_summary_table.csv.
+  Note on module_scores_CLR_vs_ARG_burden.csv: this table's exact transform could not be
+  reproduced from any script or frozen matrix in this repository and was therefore NOT used as
+  this script's feature source (see the script's own docstring for detail). The CLR-transform
+  robustness check that IS reproducible and used elsewhere in this manuscript (Section 3.10 /
+  09_clr_resistome_sensitivity_check.py) is a separate, correctly-traced analysis and is
+  unaffected by this note.
+
+- 06_figure6_panel_build.py  [produces figures/Figure9_Bootstrap_Power_Analysis.pdf, i.e.
+  manuscript Figure 6]
+  Builds the combined two-panel manuscript Figure 6: Panel A redraws the bootstrap statistical
+  power analysis (Section 3.6) as true vector output directly from bootstrap_power_analysis.csv,
+  rather than embedding the earlier standalone figure, so both panels share one clean vector
+  file with no embedded raster images. Panel B is the Elastic Net bootstrap stability-selection
+  bar chart from 05_ml_module_arg_prediction.py's output (tables/ML_module_summary_table.csv),
+  coloured by the same 15-module colour key used throughout this project (figures/
+  module_colors.json — copy this file into figures/ if it is missing; it is a dependency of this
+  script, not regenerated by it). Run 05_ml_module_arg_prediction.py first.
+
+- figures/module_colors.json
+  The 15-module colour dictionary used consistently across the module-collapsed Figure 1A and
+  Figure 6B (and, informally, across earlier exploratory figures in this project). Not itself an
+  analysis output — a shared style asset, analogous in role to 00_style_setup.py under the
+  planned 02_figure_generation/ folder above.

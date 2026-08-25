@@ -1,0 +1,10 @@
+# Python dependencies for the analysis and figure-generation pipeline
+# (code/00_core_network_pipeline, code/01_resistome_and_robustness_checks, code/02_figure_generation)
+# Tested with Python 3.10.
+pandas>=1.5
+numpy>=1.23
+scipy>=1.9
+networkx>=2.8
+matplotlib>=3.6
+openpyxl>=3.0
+xlrd>=2.0

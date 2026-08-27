@@ -1,7 +1,6 @@
 # Wastewater stress-physiology / resistome network — analysis code
 
-Analysis code for **"A stress-physiology gene co-occurrence network is associated with
-antibiotic-resistance-gene burden in urban wastewater metagenomes."**
+Analysis code for **"A stress-physiology gene co-occurrence network correlates with antibiotic-resistance genes in wastewater metagenomes."**
 
 Eighteen wastewater metagenomes (3 source types x 3 cities x 2 replicates, Khyber Pakhtunkhwa,
 Pakistan) were profiled for 903 curated KEGG Orthology (KO) genes across 15 functional modules

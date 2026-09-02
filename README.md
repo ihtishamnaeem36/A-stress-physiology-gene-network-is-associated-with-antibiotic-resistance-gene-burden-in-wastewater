@@ -54,11 +54,6 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Figure-generation and manuscript-build steps additionally need:
-- Node.js (>=16) and npm, for `03_manuscript_build/` (`cd 03_manuscript_build && npm install`)
-- LibreOffice (`soffice`) and Poppler (`pdftoppm`), only if you want to render the built
-  `.docx` to PDF/JPEG for visual verification after a rebuild — not required to run the
-  analysis itself.
 
 ## Data availability
 
